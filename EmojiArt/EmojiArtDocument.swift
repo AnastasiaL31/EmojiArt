@@ -35,6 +35,10 @@ class EmojiArtDocument: ObservableObject {
     func addEmoji(_ emoji: String, position: Emoji.Position, size: CGFloat) {
         emojiArt.addEmoji(emoji, at: position, size: Int(size))
     }
+    
+    func zoomEmojiSize(_ id: Int, to zoom: CGFloat) {
+        emojiArt.resizeEmoji(id, scale: Float(zoom))
+    }
 }
 
 extension EmojiArt.Emoji {

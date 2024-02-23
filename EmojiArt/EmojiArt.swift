@@ -20,6 +20,13 @@ struct EmojiArt {
             size: size,
             id: uniqueEmojiId
         ))
+    
+    }
+    
+    mutating func resizeEmoji(_ id: Int, scale: Float) {
+        if let emojiIndex = emojis.firstIndex(where: { emoji in emoji.id == id}) {
+            emojis[emojiIndex].size = Int(Float(emojis[emojiIndex].size) * scale)
+        }
     }
     
     struct Emoji : Identifiable{

@@ -33,8 +33,11 @@ struct EmojiArtDocumentView: View {
         GeometryReader { geometry in
             ZStack {
                 Color.white
+                    .onTapGesture {
+                        selectedEmojis.removeAll()
+                    }
                 documentContent(in: geometry)
-                    .scaleEffect(zoom * myGestureZoom)
+                    .scaleEffect(zoom*(selectedEmojis.isEmpty ? gestureZoom : 1))
                     .offset(pan + gesturePan)
             }
             .gesture(panGesture.simultaneously(with: zoomGesture)) // recognize both at the same time
@@ -47,18 +50,42 @@ struct EmojiArtDocumentView: View {
 
     @State private var zoom: CGFloat = 1
     @State private var pan: CGOffset = .zero // == CGSize
-    @GestureState private var myGestureZoom: CGFloat = 1
+    @GestureState private var gestureZoom: CGFloat = 1
     @GestureState private var gesturePan: CGOffset = .zero
+    @State private var selectedEmojis: Set<Int> = []
+    @State private var emojiZoom: CGFloat = 1
+    
+    private func selectEmoji(_ id: Int){
+        if ifEmojiIsSelected(id) {
+            selectedEmojis.remove(id)
+        } else {
+            selectedEmojis.insert(id)
+        }
+    }
+    
     
     
     private var zoomGesture: some Gesture{
         MagnificationGesture()
-            .updating($myGestureZoom) { inMotionPinchScale, gestureZoom, _ in
-                gestureZoom = inMotionPinchScale
+            .updating($gestureZoom) { inMotionPinchScale, gestureZoom, _ in
+                    gestureZoom = inMotionPinchScale
             }
             .onEnded { endingPinchScale in
-                zoom *= endingPinchScale
+                if selectedEmojis.isEmpty {
+                    zoom *= endingPinchScale
+                }
+                emojiZoom *= endingPinchScale
+                resizeEmojis()
+                emojiZoom = 1
             }
+    }
+    
+    private func resizeEmojis(){
+        for id in selectedEmojis {
+            if document.emojis.contains(where: {$0.id == id}) {
+                document.zoomEmojiSize(id, to: emojiZoom)
+            }
+        }
     }
     
     private var panGesture : some Gesture {
@@ -75,13 +102,28 @@ struct EmojiArtDocumentView: View {
     private func documentContent(in geometry: GeometryProxy) -> some View {
         AsyncImage(url: document.background, content: { image in
             image.resizable()},placeholder: {})
+        .onTapGesture {
+            selectedEmojis.removeAll()
+        }
         .position(Emoji.Position.zero.in(geometry))
+        
         ForEach(document.emojis) { emoji in
             Text(emoji.string)
                 .font(emoji.font)
+                .onTapGesture {
+                    selectEmoji(emoji.id)
+                }
+                .background(ifEmojiIsSelected(emoji.id) ? Rectangle().border(.selection).opacity(0.3) : nil)
+                .scaleEffect(ifEmojiIsSelected(emoji.id) ? emojiZoom*gestureZoom : 1)
                 .position(emoji.position.in(geometry))
         }
     }
+    
+    
+    private func ifEmojiIsSelected(_ id: Int) -> Bool {
+        selectedEmojis.contains(id)
+    }
+    
     
     private func drop(_ sturldatas: [Sturldata], at location: CGPoint, in  geometry: GeometryProxy) -> Bool {
         for sturldata in sturldatas {
