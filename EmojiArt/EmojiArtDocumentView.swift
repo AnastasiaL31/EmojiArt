@@ -10,9 +10,7 @@ import SwiftUI
 struct EmojiArtDocumentView: View {
     typealias Emoji = EmojiArt.Emoji
     @ObservedObject var document: EmojiArtDocument
-    
-    private let emojis = "🚜🏍🛴🚲🚑🚓🚕🚎🚘🍔🍕🌭🌮🍙🍰🍭🍩🥗🌞🌚⛈️❄️🔥🌈🌪🌜"
-    
+        
     private let paletteEmojiSize: CGFloat = 40
     
     var body: some View {
@@ -38,7 +36,7 @@ struct EmojiArtDocumentView: View {
                     }
                 documentContent(in: geometry)
                     .scaleEffect(zoom*(selectedEmojis.isEmpty ? gestureZoom : 1))
-                    .offset(pan + gesturePan)
+                    .offset(pan + (selectedEmojis.isEmpty ? gesturePan : .zero))
             }
             .gesture(panGesture.simultaneously(with: zoomGesture)) // recognize both at the same time
             .dropDestination(for: Sturldata.self) { sturldatas, location in
@@ -54,6 +52,8 @@ struct EmojiArtDocumentView: View {
     @GestureState private var gesturePan: CGOffset = .zero
     @State private var selectedEmojis: Set<Int> = []
     @State private var emojiZoom: CGFloat = 1
+    @State private var emojiPan: CGOffset = .zero
+    
     
     private func selectEmoji(_ id: Int){
         if ifEmojiIsSelected(id) {
@@ -73,10 +73,12 @@ struct EmojiArtDocumentView: View {
             .onEnded { endingPinchScale in
                 if selectedEmojis.isEmpty {
                     zoom *= endingPinchScale
+                } else {
+                    emojiZoom *= endingPinchScale
+                    resizeEmojis()
+                    emojiZoom = 1
                 }
-                emojiZoom *= endingPinchScale
-                resizeEmojis()
-                emojiZoom = 1
+                
             }
     }
     
@@ -88,13 +90,27 @@ struct EmojiArtDocumentView: View {
         }
     }
     
+    private func moveEmojis(){
+        for id in selectedEmojis {
+            if document.emojis.contains(where: {$0.id == id}) {
+                document.moveEmojis(id, offset: emojiPan, zoom: zoom)
+            }
+        }
+    }
+    
     private var panGesture : some Gesture {
         DragGesture()
             .updating($gesturePan) {value , gesturePan, _ in
                 gesturePan = value.translation
             }
             .onEnded { value in
-                pan += value.translation // in extens
+                if selectedEmojis.isEmpty {
+                    pan += value.translation // in extens
+                }else{
+                    emojiPan += value.translation
+                    moveEmojis()
+                    emojiPan = .zero
+                }
             }
     }
     
@@ -113,14 +129,24 @@ struct EmojiArtDocumentView: View {
                 .onTapGesture {
                     selectEmoji(emoji.id)
                 }
+                .contextMenu {
+                    AnimatedActionButton("Delete", role: .destructive){
+                        deleteEmoji(emoji.id)
+                    }
+                }
                 .background(ifEmojiIsSelected(emoji.id) ? Rectangle().border(.selection).opacity(0.3) : nil)
                 .scaleEffect(ifEmojiIsSelected(emoji.id) ? emojiZoom*gestureZoom : 1)
+                .offset(ifEmojiIsSelected(emoji.id) ? (emojiPan+gesturePan)/zoom : .zero)
                 .position(emoji.position.in(geometry))
+                
         }
     }
     
+    private func deleteEmoji(_ id: Int){
+        document.deleteEmoji(id)
+    }
     
-    private func ifEmojiIsSelected(_ id: Int) -> Bool {
+     private func ifEmojiIsSelected(_ id: Int) -> Bool {
         selectedEmojis.contains(id)
     }
     

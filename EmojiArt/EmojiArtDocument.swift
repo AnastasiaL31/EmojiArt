@@ -39,6 +39,14 @@ class EmojiArtDocument: ObservableObject {
     func zoomEmojiSize(_ id: Int, to zoom: CGFloat) {
         emojiArt.resizeEmoji(id, scale: Float(zoom))
     }
+    
+    func moveEmojis(_ id: Int, offset: CGOffset, zoom:CGFloat){
+        emojiArt.moveEmoji(id, offset: Emoji.Position(x: Int(offset.width/zoom), y: Int(offset.height/zoom)))
+    }
+    
+    func deleteEmoji(_ id: Int){
+        emojiArt.deleteEmoji(id)
+    }
 }
 
 extension EmojiArt.Emoji {

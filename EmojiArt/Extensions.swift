@@ -26,6 +26,14 @@ extension CGOffset {
     static func +=(lhs: inout CGOffset, rhs: CGOffset) {
         lhs = lhs + rhs
     }
+    
+    static func *(lhs: CGOffset, rhs: CGFloat) -> CGOffset{
+        CGOffset(width: lhs.width*rhs, height: lhs.height*rhs)
+    }
+    
+    static func /(lhs: CGOffset, rhs: CGFloat) -> CGOffset{
+        CGOffset(width: lhs.width/rhs, height: lhs.height/rhs)
+    }
 }
 
 extension String {
@@ -40,6 +48,18 @@ extension String {
                 sofar.append(element)
             }
         }
+    }
+}
+
+extension EmojiArt.Emoji.Position {
+    typealias Position = EmojiArt.Emoji.Position
+    
+    static func +(lhs: Position, rhs: Position) -> Position{
+        Position(x: lhs.x + rhs.x, y: lhs.y - rhs.y)
+    }
+    
+    static func +=(lhs:inout Position, rhs: Position){
+        lhs = lhs + rhs
     }
 }
 

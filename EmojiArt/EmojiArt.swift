@@ -29,6 +29,19 @@ struct EmojiArt {
         }
     }
     
+    mutating func moveEmoji(_ id: Int, offset: Emoji.Position){
+        if let emojiIndex = emojis.firstIndex(where: { emoji in emoji.id == id}) {
+            emojis[emojiIndex].position += offset
+        }
+    }
+    
+    mutating func deleteEmoji(_ id: Int){
+        if let emojiIndex = emojis.firstIndex(where: { emoji in emoji.id == id}) {
+            emojis.remove(at: emojiIndex)
+        }
+    }
+    
+    
     struct Emoji : Identifiable{
         let string: String
         var position: Position
