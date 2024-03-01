@@ -116,30 +116,41 @@ struct EmojiArtDocumentView: View {
     
     @ViewBuilder
     private func documentContent(in geometry: GeometryProxy) -> some View {
-        AsyncImage(url: document.background, content: { image in
-            image.resizable()},placeholder: {})
+        AsyncImage(url: document.background) { phase in
+            if let image = phase.image {
+                image.resizable()
+            } else if let url = document.background {
+                Text("\(url)")
+            } else{
+                ProgressView()
+            }
+        }
         .onTapGesture {
             selectedEmojis.removeAll()
         }
         .position(Emoji.Position.zero.in(geometry))
         
         ForEach(document.emojis) { emoji in
-            Text(emoji.string)
-                .font(emoji.font)
-                .onTapGesture {
-                    selectEmoji(emoji.id)
-                }
-                .contextMenu {
-                    AnimatedActionButton("Delete", role: .destructive){
-                        deleteEmoji(emoji.id)
-                    }
-                }
-                .background(ifEmojiIsSelected(emoji.id) ? Rectangle().border(.selection).opacity(0.3) : nil)
-                .scaleEffect(ifEmojiIsSelected(emoji.id) ? emojiZoom*gestureZoom : 1)
-                .offset(ifEmojiIsSelected(emoji.id) ? (emojiPan+gesturePan)/zoom : .zero)
+            createEmoji(emoji)
                 .position(emoji.position.in(geometry))
-                
         }
+    }
+    
+    
+    private func createEmoji(_ emoji: Emoji) -> some View{
+        Text(emoji.string)
+            .font(emoji.font)
+            .onTapGesture {
+                selectEmoji(emoji.id)
+            }
+            .contextMenu {
+                AnimatedActionButton("Delete", role: .destructive){
+                    deleteEmoji(emoji.id)
+                }
+            }
+            .background(ifEmojiIsSelected(emoji.id) ? Rectangle().border(.selection).opacity(0.3) : nil)
+            .scaleEffect(ifEmojiIsSelected(emoji.id) ? emojiZoom*gestureZoom : 1)
+            .offset(ifEmojiIsSelected(emoji.id) ? (emojiPan+gesturePan)/zoom : .zero)
     }
     
     private func deleteEmoji(_ id: Int){
