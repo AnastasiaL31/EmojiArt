@@ -10,6 +10,7 @@ import SwiftUI
 struct PaletteChooser: View {
     @EnvironmentObject var store: PaletteStore
     @State var showPalleteEditor = false
+    @State var showPaletteList = false
     
     var body: some View {
         HStack {
@@ -23,6 +24,12 @@ struct PaletteChooser: View {
         .sheet(isPresented: $showPalleteEditor) {
             PalleteEditor(palette: $store.palettes[store.cursorIndex])
                 .font(nil)
+        }
+        .sheet(isPresented: $showPaletteList) {
+            NavigationStack{
+                EditablePaletteList(store: store)
+                    .font(nil)
+            }
         }
     }
     private var chooser: some View {
@@ -40,6 +47,9 @@ struct PaletteChooser: View {
             }
             AnimatedActionButton("Edit", systemImage: "pencil"){
                 showPalleteEditor = true
+            }
+            AnimatedActionButton("List", systemImage: "list.bullet.rectangle"){
+                showPaletteList = true
             }
         }
     }
